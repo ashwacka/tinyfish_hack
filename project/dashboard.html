@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HBB Lead Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f3;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e5;
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .logo { font-size: 20px; font-weight: 600; color: #1a1a1a; }
+    .logo span { color: #f97316; }
+    .subtitle { font-size: 13px; color: #888; }
+    .export-btn {
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .export-btn:hover:not(:disabled) { background: #333; }
+    .export-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .stats-bar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e5;
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .stat { text-align: center; min-width: 5rem; }
+    .stat-value { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+    .stat-label { font-size: 12px; color: #888; margin-top: 2px; }
+
+    .pipeline-banner {
+      background: #fff7ed;
+      border-bottom: 1px solid #fed7aa;
+      padding: 0.65rem 2rem;
+      font-size: 13px;
+      color: #9a3412;
+    }
+    .pipeline-banner[hidden] { display: none !important; }
+
+    .meta-bar {
+      background: #fafaf9;
+      border-bottom: 1px solid #e8e8e5;
+      padding: 0.75rem 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      font-size: 13px;
+      color: #666;
+    }
+    .meta-bar label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+    .meta-bar .btn-ghost {
+      background: #fff;
+      border: 1px solid #e8e8e5;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .meta-bar .btn-ghost:hover { border-color: #ccc; }
+    .meta-bar input[type="file"] { font-size: 12px; max-width: 220px; }
+
+    .filters {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e5;
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-label { font-size: 13px; color: #888; font-weight: 500; }
+    select, input[type="text"] {
+      border: 1px solid #e8e8e5;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #fff;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus, input[type="text"]:focus { border-color: #f97316; }
+    input[type="text"] { width: min(220px, 100%); cursor: text; }
+    .filter-chip {
+      background: transparent;
+      border: 1px solid #e8e8e5;
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #555;
+      transition: all 0.15s;
+    }
+    .filter-chip.active {
+      background: #f97316;
+      border-color: #f97316;
+      color: #fff;
+      font-weight: 500;
+    }
+    .filter-chip:hover:not(.active) { border-color: #ccc; background: #fafafa; }
+
+    .main { padding: 1.5rem 2rem; }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .results-count { font-size: 14px; color: #888; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e8e8e5;
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: box-shadow 0.15s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .business-name { font-size: 15px; font-weight: 600; color: #1a1a1a; line-height: 1.3; }
+    .platform-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .platform-lemon8 { background: #fef3c7; color: #92400e; }
+    .platform-shopee { background: #fee2e2; color: #991b1b; }
+    .platform-carousell { background: #ede9fe; color: #5b21b6; }
+    .platform-other { background: #f3f4f6; color: #374151; }
+
+    .reviewer-hint {
+      font-size: 11px;
+      color: #999;
+      margin: -0.25rem 0 0.15rem 0;
+    }
+    .what-they-sell { font-size: 13px; color: #555; line-height: 1.5; }
+
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    .tag-category { background: #f0fdf4; color: #166534; }
+    .tag-location { background: #eff6ff; color: #1e40af; }
+    .tag-price { background: #fafafa; color: #555; border: 1px solid #e8e8e5; }
+
+    .divider { height: 1px; background: #f0f0ee; }
+
+    .contact-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 7px;
+      border: 1px solid #e8e8e5;
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .contact-btn:hover { background: #f5f5f3; border-color: #ccc; }
+    .contact-btn.whatsapp { color: #16a34a; border-color: #bbf7d0; background: #f0fdf4; }
+    .contact-btn.whatsapp:hover { background: #dcfce7; }
+    .contact-btn.instagram { color: #9333ea; border-color: #e9d5ff; background: #faf5ff; }
+    .contact-btn.instagram:hover { background: #f3e8ff; }
+    .contact-btn.telegram { color: #0284c7; border-color: #bae6fd; background: #f0f9ff; }
+    .contact-btn.telegram:hover { background: #e0f2fe; }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .last-active { font-size: 11px; color: #aaa; }
+    .view-link {
+      font-size: 12px;
+      color: #f97316;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .view-link:hover { text-decoration: underline; }
+    .view-link[href=""], .view-link:not([href]) { pointer-events: none; opacity: 0.4; }
+
+    .active-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      margin-right: 4px;
+    }
+    .inactive-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #d1d5db;
+      margin-right: 4px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #aaa;
+      grid-column: 1/-1;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 1rem; }
+    .empty-text { font-size: 15px; }
+
+    .no-contact { font-size: 12px; color: #bbb; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">HBB<span>Scout</span></div>
+    <div class="subtitle">Home-based business leads · <code>results.json</code> (enriched) or <code>raw_results.json</code> (TinyFish scrape)</div>
+  </div>
+  <button type="button" class="export-btn" id="btnCsv" disabled>Export CSV</button>
+</div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Total businesses</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-whatsapp">0</div>
+    <div class="stat-label">With WhatsApp</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-instagram">0</div>
+    <div class="stat-label">With Instagram</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-active">0</div>
+    <div class="stat-label">Active (flagged)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-lemon8">0</div>
+    <div class="stat-label">From Lemon8</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="stat-shopee">0</div>
+    <div class="stat-label">From Shopee</div>
+  </div>
+</div>
+
+<div id="pipelineBanner" class="pipeline-banner" role="status" hidden></div>
+
+<div class="meta-bar">
+  <label><input type="checkbox" id="autoPoll" checked /> Auto-refresh every 4s</label>
+  <button type="button" class="btn-ghost" id="btnRefresh">Reload data</button>
+  <span id="loadMsg"></span>
+  <input type="file" id="filePick" accept="application/json,.json" />
+</div>
+
+<div class="filters">
+  <span class="filter-label">Filter:</span>
+  <input type="text" id="search-input" placeholder="Search name or description…" autocomplete="off" />
+  <select id="filter-category">
+    <option value="">All categories</option>
+  </select>
+  <select id="filter-location">
+    <option value="">All locations</option>
+  </select>
+  <select id="filter-platform">
+    <option value="">All platforms</option>
+    <option>Lemon8</option>
+    <option>Shopee</option>
+  </select>
+  <select id="filter-price">
+    <option value="">All prices</option>
+    <option>Under $20</option>
+    <option>$20-$50</option>
+    <option>$50-$100</option>
+    <option>Above $100</option>
+  </select>
+  <button type="button" class="filter-chip active" id="chip-all" data-contact="all">All</button>
+  <button type="button" class="filter-chip" id="chip-whatsapp" data-contact="whatsapp">Has WhatsApp</button>
+  <button type="button" class="filter-chip" id="chip-instagram" data-contact="instagram">Has Instagram</button>
+  <button type="button" class="filter-chip" id="chip-anycontact" data-contact="anycontact">Any contact</button>
+  <button type="button" class="filter-chip" id="chip-active" data-contact="active">Active only</button>
+</div>
+
+<div class="main">
+  <div class="results-header">
+    <div class="results-count" id="results-count">Loading…</div>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+  const CATEGORIES = ["Cakes", "Kueh", "Malay Food", "Healthy", "Desserts", "Other"];
+
+  let allRows = [];
+  let contactFilter = "all";
+  let lastResultsFingerprint = "";
+  let pollTimer = null;
+
+  const grid = document.getElementById("grid");
+  const searchInput = document.getElementById("search-input");
+  const fCategory = document.getElementById("filter-category");
+  const fLocation = document.getElementById("filter-location");
+  const fPlatform = document.getElementById("filter-platform");
+  const fPrice = document.getElementById("filter-price");
+  const btnCsv = document.getElementById("btnCsv");
+  const loadMsg = document.getElementById("loadMsg");
+  const filePick = document.getElementById("filePick");
+  const pipelineBanner = document.getElementById("pipelineBanner");
+  const autoPoll = document.getElementById("autoPoll");
+  const btnRefresh = document.getElementById("btnRefresh");
+  const resultsCount = document.getElementById("results-count");
+
+  const CHIP_IDS = ["all", "whatsapp", "instagram", "anycontact", "active"];
+
+  /** TinyFish often returns { "result": [ {...}, ... ] } — unwrap to an array. */
+  function normalizeIncomingJson(payload) {
+    if (payload == null) return [];
+    if (Array.isArray(payload)) return payload;
+    if (typeof payload === "object") {
+      if (Array.isArray(payload.result)) return payload.result;
+      for (const k of ["listings", "posts", "results", "data", "items"]) {
+        if (Array.isArray(payload[k])) return payload[k];
+      }
+    }
+    return [];
+  }
+
+  /** Trailing "(check IG)", "(link in bio)", etc. — not part of the business name. */
+  const META_PAREN_SUFFIX_RES = [
+    /\s*\(\s*check\s*ig\s*\)\s*$/i,
+    /\s*\(\s*see\s*ig\s*\)\s*$/i,
+    /\s*\(\s*check\s*instagram\s*\)\s*$/i,
+    /\s*\(\s*see\s*instagram\s*\)\s*$/i,
+    /\s*\(\s*ig\s*\)\s*$/i,
+    /\s*\(\s*link\s+in\s+bio\s*\)\s*$/i,
+    /\s*\(\s*link\s+on\s+bio\s*\)\s*$/i,
+    /\s*\(\s*bio\s*\)\s*$/i,
+    /\s*\(\s*dm\s*(me)?\s*\)\s*$/i,
+    /\s*\(\s*pm\s*(me)?\s*\)\s*$/i,
+    /\s*\(\s*whatsapp\s*\)\s*$/i,
+    /\s*\(\s*wa\s*\)\s*$/i,
+    /\s*\(\s*telegram\s*\)\s*$/i,
+    /\s*\(\s*details\s+in\s+bio\s*\)\s*$/i,
+    /\s*\(\s*more\s+info\s+in\s+bio\s*\)\s*$/i,
+    /\s*\(\s*tap\s+link\s*\)\s*$/i,
+    /\s*\(\s*swipe\s+up\s*\)\s*$/i,
+  ];
+
+  function stripTrailingMetaParens(s) {
+    let t = String(s || "").trim();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const re of META_PAREN_SUFFIX_RES) {
+        const next = t.replace(re, "").trim();
+        if (next !== t) {
+          t = next;
+          changed = true;
+          break;
+        }
+      }
+    }
+    return t;
+  }
+
+  /**
+   * "Brand (@handle on instagram)" → clean name + handle; "handle on instagram" → same token for both.
+   * Fills instagram for the tile button when missing.
+   */
+  function extractInstagramFromBusinessName(businessName) {
+    const s = String(businessName || "").trim();
+    if (!s) return { clean: "", instagram: "" };
+    let m = s.match(/^\s*(.+?)\s*\(\s*@?([a-zA-Z0-9._]+)\s+on\s+instagram\s*\)\s*$/i);
+    if (m) {
+      const clean = stripTrailingMetaParens(m[1].trim()).trim();
+      return { clean, instagram: m[2] };
+    }
+    m = s.match(/^(.+?)\s+on\s+instagram\s*$/i);
+    if (m) {
+      const before = m[1].trim();
+      if (/^[a-zA-Z0-9._]+$/.test(before)) {
+        return { clean: before, instagram: before };
+      }
+      return { clean: before, instagram: "" };
+    }
+    return { clean: s, instagram: "" };
+  }
+
+  /** True if we should use text INSIDE final "(...)" as the brand (prefix is a label). */
+  function prefixLooksLikeContactLabel(prefix) {
+    return /whatsapp|preorder|pre-order|order via|for preorders|contact\s|reach\s|dm\s|message\s|call\s|text\s|tap\s|link\s|visit\s|check\s+out/i.test(
+      prefix
+    );
+  }
+
+  /**
+   * Pull the business name from scrape `contact` (not the Lemon8 reviewer username).
+   * - "/KoBear Matcha (check IG)" → "KoBear Matcha"
+   * - "/Deca Coffee (Home-Based)" → "Deca Coffee (Home-Based)" (keeps real suffix)
+   * - "WhatsApp… (The Long Weekend Pizza)" → "The Long Weekend Pizza"
+   * - "/driptease.sg" → "driptease.sg"
+   */
+  function parseBusinessNameFromContact(contact) {
+    let raw = String(contact || "").trim();
+    if (!raw) return "";
+    if (raw.startsWith("/")) raw = raw.replace(/^\/+/, "").trim();
+    else if (raw.startsWith("@")) raw = raw.slice(1).trim();
+
+    raw = stripTrailingMetaParens(raw).trim();
+    if (!raw) return "";
+
+    const m = raw.match(/^(.+)\(([^)]+)\)\s*$/);
+    if (m) {
+      const prefix = m[1].trim();
+      const inner = m[2].trim();
+      if (
+        prefixLooksLikeContactLabel(prefix) &&
+        inner.length >= 2 &&
+        inner.length < 120 &&
+        !/^https?:/i.test(inner)
+      ) {
+        return inner;
+      }
+    }
+
+    return raw;
+  }
+
+  /** Card title: prefer business from contact; never prefer reviewer username alone. */
+  function cardDisplayName(r) {
+    const fromContact = parseBusinessNameFromContact(r.contact);
+    if (fromContact) return fromContact;
+    const bn = String(r.business_name || "").trim();
+    if (bn) return bn;
+    return "Untitled listing";
+  }
+
+  /** Map raw scrape rows (username, caption, post_url, contact) onto display fields. */
+  function normalizeRow(r) {
+    if (!r || typeof r !== "object") return r;
+    const out = { ...r };
+    const url = (out.post_url || out.listing_url || "").toLowerCase();
+    if (!out.platform) {
+      if (url.includes("lemon8")) out.platform = "Lemon8";
+      else if (url.includes("shopee")) out.platform = "Shopee";
+      else out.platform = "Lemon8";
+    }
+    out.business_name = out.business_name || out.username || "Unnamed";
+    out.what_they_sell = out.what_they_sell || out.caption || out.title || "—";
+    out.original_url = (out.original_url || out.post_url || out.listing_url || "").trim();
+
+    const c = String(out.contact || "").trim();
+    const c0 = c.replace(/^\/+/, "").trim();
+    if (c) {
+      if (!out.instagram) {
+        if (c.startsWith("@")) out.instagram = c.slice(1).replace(/\s/g, "");
+        else if (/^[a-zA-Z0-9._]+$/.test(c0)) out.instagram = c0;
+      }
+      if (!out.whatsapp && /^\+?\d[\d\s]{6,}$/.test(c)) {
+        out.whatsapp = c.replace(/\D/g, "");
+      }
+    }
+
+    const bn = String(out.business_name || "").trim();
+    if (bn) {
+      const { clean, instagram } = extractInstagramFromBusinessName(bn);
+      if (clean) out.business_name = clean;
+      if (instagram && !String(out.instagram || "").trim()) out.instagram = instagram;
+    }
+    return out;
+  }
+
+  function hasAnyContact(r) {
+    return !!(r.whatsapp || r.instagram || r.telegram || r.email || String(r.contact || "").trim());
+  }
+
+  /** Raw scrape prices like "<$10" vs enriched "Under $20". */
+  function priceMatchesFilter(r, filterVal) {
+    if (!filterVal) return true;
+    if (r.price_range === filterVal) return true;
+    const raw = String(r.price || "").toLowerCase();
+    if (!raw) return false;
+    if (filterVal === "Under $20") {
+      return (
+        raw.includes("<") ||
+        raw.includes("under") ||
+        /\$\s*1?\d\b/.test(raw) ||
+        /\b(10|15|18|19)\b/.test(raw)
+      );
+    }
+    if (filterVal === "$20-$50")
+      return /\$\s*(2\d|30|35|40|45|50)\b/.test(raw) || /\b(25|30|35|40|45)\b/.test(raw);
+    if (filterVal === "$50-$100") return /\$\s*(5\d|6\d|7\d|8\d|9\d|100)\b/.test(raw);
+    if (filterVal === "Above $100") return /\$\s*\d{3,}\b/.test(raw) || raw.includes("above 100");
+    return false;
+  }
+
+  function uniqSorted(values) {
+    return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function waHref(num) {
+    const digits = String(num).replace(/\D/g, "");
+    if (!digits) return "";
+    let n = digits.replace(/^0+/, "");
+    if (n.length === 8) n = "65" + n;
+    return "https://wa.me/" + n;
+  }
+
+  function igHref(handle) {
+    const h = String(handle).replace(/^@/, "").trim();
+    if (!h) return "";
+    return "https://instagram.com/" + encodeURIComponent(h);
+  }
+
+  function tgHref(user) {
+    const u = String(user).replace(/^@/, "").trim();
+    if (!u) return "";
+    return "https://t.me/" + encodeURIComponent(u);
+  }
+
+  function platformClass(p) {
+    const k = String(p || "other").toLowerCase();
+    if (k === "lemon8") return "platform-lemon8";
+    if (k === "shopee") return "platform-shopee";
+    if (k === "carousell") return "platform-carousell";
+    return "platform-other";
+  }
+
+  function buildContactBtns(d) {
+    let btns = "";
+    const wa = waHref(d.whatsapp);
+    if (wa) {
+      btns += `<a class="contact-btn whatsapp" href="${wa}" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.126.557 4.126 1.526 5.868L.057 23.888l6.21-1.625A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.806 9.806 0 01-5.032-1.384l-.36-.214-3.733.977.996-3.648-.235-.374A9.778 9.778 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182S21.818 6.58 21.818 12 17.42 21.818 12 21.818z"/></svg>
+      WhatsApp</a>`;
+    }
+    if (d.instagram) {
+      const ig = igHref(d.instagram);
+      if (ig) {
+        btns += `<a class="contact-btn instagram" href="${ig}" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      Instagram</a>`;
+      }
+    }
+    if (d.telegram) {
+      const tg = tgHref(d.telegram);
+      if (tg) {
+        btns += `<a class="contact-btn telegram" href="${tg}" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      Telegram</a>`;
+      }
+    }
+    if (d.email) {
+      btns += `<a class="contact-btn" href="mailto:${escapeHtml(d.email)}" target="_blank" rel="noopener">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      Email</a>`;
+    }
+    return btns;
+  }
+
+  /** Extra contact line when raw `contact` has more than the title we already show. */
+  function buildContactRowHtml(d) {
+    const btns = buildContactBtns(d);
+    const raw = String(d.contact || "").trim();
+    const title = cardDisplayName(d);
+    const stripped = raw.replace(/^\/+/, "").trim();
+
+    if (btns) return btns;
+    if (!raw) return `<span class="no-contact">No contact info</span>`;
+    if (stripped === title || raw === "/" + title) {
+      return `<span class="no-contact" style="opacity:0.65;font-size:11px;">From post / caption</span>`;
+    }
+    const m = raw.match(/^(.+)\(([^)]+)\)\s*$/);
+    if (m && m[2].trim() === title) {
+      const prefix = m[1].trim();
+      if (prefix) {
+        return `<span class="no-contact" style="font-style:normal;color:#555;">${escapeHtml(prefix)}</span>`;
+      }
+    }
+    return `<span class="no-contact" style="font-style:normal;color:#555;">Scrape contact: ${escapeHtml(raw)}</span>`;
+  }
+
+  function listingUrl(d) {
+    return (d.original_url || d.post_url || d.listing_url || "").trim();
+  }
+
+  function cardHtml(d) {
+    const pClass = platformClass(d.platform);
+    const url = listingUrl(d);
+    const contactRow = buildContactRowHtml(d);
+    const active = d.active === true;
+    const dot = active ? `<span class="active-dot"></span>` : `<span class="inactive-dot"></span>`;
+    const statusText = active ? "Likely active" : "Uncertain / inactive";
+    const viewHref = url ? escapeHtml(url) : "#";
+    const displayName = cardDisplayName(d);
+    const reviewer = String(d.username || "").trim();
+    const reviewerLine =
+      reviewer && reviewer !== displayName
+        ? `<div class="reviewer-hint">Post by ${escapeHtml(reviewer)}</div>`
+        : "";
+
+    return `
+    <article class="card">
+      <div class="card-header">
+        <div class="business-name">${escapeHtml(displayName)}</div>
+        <span class="platform-badge ${pClass}">${escapeHtml(d.platform || "—")}</span>
+      </div>
+      ${reviewerLine}
+      <div class="what-they-sell">${escapeHtml(d.what_they_sell || "—")}</div>
+      <div class="tags">
+        ${d.food_category ? `<span class="tag tag-category">${escapeHtml(d.food_category)}</span>` : ""}
+        ${d.location ? `<span class="tag tag-location">📍 ${escapeHtml(d.location)}</span>` : ""}
+        ${d.price_range || d.price ? `<span class="tag tag-price">${escapeHtml(d.price_range || d.price)}</span>` : ""}
+      </div>
+      <div class="divider"></div>
+      <div class="contact-row">
+        ${contactRow}
+      </div>
+      <div class="card-footer">
+        <div class="last-active">${dot}${escapeHtml(statusText)}</div>
+        ${url ? `<a class="view-link" href="${viewHref}" target="_blank" rel="noopener">View listing →</a>` : `<span class="view-link" style="opacity:0.4">No link</span>`}
+      </div>
+    </article>`;
+  }
+
+  function populateCategoryAndLocation(rows) {
+    const locs = uniqSorted(rows.map((r) => r.location).filter(Boolean));
+    const catVal = fCategory.value;
+    fCategory.innerHTML =
+      '<option value="">All categories</option>' +
+      CATEGORIES.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+    if ([...fCategory.options].some((o) => o.value === catVal)) fCategory.value = catVal;
+
+    const locVal = fLocation.value;
+    fLocation.innerHTML =
+      '<option value="">All locations</option>' +
+      locs.map((l) => `<option value="${escapeHtml(l)}">${escapeHtml(l)}</option>`).join("");
+    if ([...fLocation.options].some((o) => o.value === locVal)) fLocation.value = locVal;
+  }
+
+  function updateStats() {
+    const d = allRows;
+    document.getElementById("stat-total").textContent = d.length;
+    document.getElementById("stat-whatsapp").textContent = d.filter((r) => r.whatsapp).length;
+    document.getElementById("stat-instagram").textContent = d.filter((r) => r.instagram).length;
+    document.getElementById("stat-active").textContent = d.filter((r) => r.active === true).length;
+    document.getElementById("stat-lemon8").textContent = d.filter(
+      (r) => String(r.platform || "").toLowerCase() === "lemon8"
+    ).length;
+    document.getElementById("stat-shopee").textContent = d.filter(
+      (r) => String(r.platform || "").toLowerCase() === "shopee"
+    ).length;
+  }
+
+  function setContactFilter(val) {
+    contactFilter = val;
+    CHIP_IDS.forEach((id) => {
+      const el = document.getElementById("chip-" + id);
+      if (el) el.classList.toggle("active", id === val);
+    });
+    render();
+  }
+
+  function visibleRows() {
+    const search = (searchInput.value || "").toLowerCase().trim();
+    const category = fCategory.value;
+    const location = fLocation.value;
+    const platform = fPlatform.value;
+    const price = fPrice.value;
+
+    return allRows.filter((r) => {
+      if (search) {
+        const n = cardDisplayName(r).toLowerCase();
+        const w = (r.what_they_sell || "").toLowerCase();
+        const c = String(r.contact || "").toLowerCase();
+        if (!n.includes(search) && !w.includes(search) && !c.includes(search)) return false;
+      }
+      if (category && r.food_category !== category) return false;
+      if (location && r.location !== location) return false;
+      if (platform && String(r.platform || "").toLowerCase() !== platform.toLowerCase()) return false;
+      if (price && !priceMatchesFilter(r, price)) return false;
+      if (contactFilter === "whatsapp" && !r.whatsapp) return false;
+      if (contactFilter === "instagram" && !r.instagram) return false;
+      if (contactFilter === "active" && !r.active) return false;
+      if (contactFilter === "anycontact" && !hasAnyContact(r)) return false;
+      return true;
+    });
+  }
+
+  function render() {
+    const rows = visibleRows();
+    updateStats();
+    resultsCount.textContent =
+      rows.length + " business" + (rows.length !== 1 ? "es" : "") + " match filters";
+    btnCsv.disabled = rows.length === 0;
+
+    if (!rows.length) {
+      grid.innerHTML = `<div class="empty">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">No businesses match your filters</div>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = rows.map(cardHtml).join("");
+  }
+
+  function csvEscape(v) {
+    const s = v == null ? "" : String(v);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function exportCsv() {
+    const rows = visibleRows();
+    const headers = [
+      "business_name",
+      "what_they_sell",
+      "food_category",
+      "location",
+      "price_range",
+      "whatsapp",
+      "instagram",
+      "telegram",
+      "email",
+      "active",
+      "platform",
+      "original_url",
+    ];
+    const lines = [headers.join(",")];
+    for (const r of rows) {
+      const row = {
+        business_name: cardDisplayName(r),
+        what_they_sell: r.what_they_sell,
+        food_category: r.food_category || "",
+        location: r.location || "",
+        price_range: r.price_range || r.price || "",
+        whatsapp: r.whatsapp || "",
+        instagram: r.instagram || "",
+        telegram: r.telegram || "",
+        email: r.email || "",
+        active: r.active,
+        platform: r.platform || "",
+        original_url: r.original_url || r.post_url || r.listing_url || "",
+      };
+      lines.push(headers.map((h) => csvEscape(row[h])).join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "hbb_leads_export.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function captureFilterState() {
+    return {
+      search: searchInput.value,
+      category: fCategory.value,
+      location: fLocation.value,
+      platform: fPlatform.value,
+      price: fPrice.value,
+      contact: contactFilter,
+    };
+  }
+
+  function restoreFilterState(prev) {
+    if (!prev) return;
+    searchInput.value = prev.search || "";
+    if ([...fCategory.options].some((o) => o.value === prev.category)) fCategory.value = prev.category;
+    if ([...fLocation.options].some((o) => o.value === prev.location)) fLocation.value = prev.location;
+    if ([...fPlatform.options].some((o) => o.value === prev.platform)) fPlatform.value = prev.platform;
+    if ([...fPrice.options].some((o) => o.value === prev.price)) fPrice.value = prev.price;
+    contactFilter = prev.contact && CHIP_IDS.includes(prev.contact) ? prev.contact : "all";
+    CHIP_IDS.forEach((id) => {
+      const el = document.getElementById("chip-" + id);
+      if (el) el.classList.toggle("active", id === contactFilter);
+    });
+  }
+
+  function setData(payload, opts) {
+    const preserve = opts && opts.preserveFilters === true;
+    const sourceHint = (opts && opts.sourceHint) || "";
+    const prev = preserve ? captureFilterState() : null;
+    const arr = normalizeIncomingJson(payload);
+    if (!Array.isArray(arr)) {
+      loadMsg.textContent = "Expected a JSON array or an object with a result array.";
+      return;
+    }
+    allRows = arr.map(normalizeRow);
+    populateCategoryAndLocation(allRows);
+    restoreFilterState(prev);
+    loadMsg.textContent =
+      "Loaded " + allRows.length + " row(s)" + (sourceHint ? " from " + sourceHint : "") + ".";
+    render();
+  }
+
+  function pipelineBannerText(s) {
+    if (!s || !s.phase) return "";
+    const h = s.hint ? " " + s.hint : "";
+    if (s.phase === "scraping") {
+      const last = s.last_job ? " Last job: " + s.last_job + "." : "";
+      return "Scraping " + s.jobs_done + "/" + s.jobs_total + " — " + s.raw_listings + " raw rows on disk." + last + h;
+    }
+    if (s.phase === "scraping_complete") {
+      return "Scrape finished: " + s.raw_listings + " listing(s). Next: OpenAI enrichment." + h;
+    }
+    if (s.phase === "enriching") {
+      return "Enriching: " + s.enriched + "/" + s.total + "." + h;
+    }
+    if (s.phase === "complete") {
+      const n = s.enriched != null ? s.enriched : "";
+      return "Pipeline complete: " + n + " enriched row(s)." + h;
+    }
+    return "";
+  }
+
+  async function fetchPipelineStatus() {
+    try {
+      const res = await fetch("pipeline_status.json?t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  function updatePipelineBanner(st) {
+    const t = pipelineBannerText(st);
+    if (t) {
+      pipelineBanner.textContent = t;
+      pipelineBanner.hidden = false;
+    } else {
+      pipelineBanner.textContent = "";
+      pipelineBanner.hidden = true;
+    }
+  }
+
+  async function reloadFromServer(preserveFilters) {
+    const st = await fetchPipelineStatus();
+    updatePipelineBanner(st);
+    try {
+      const t = Date.now();
+      const [resEnriched, resRaw] = await Promise.all([
+        fetch("results.json?t=" + t, { cache: "no-store" }),
+        fetch("raw_results.json?t=" + t, { cache: "no-store" }),
+      ]);
+      const textEnriched = resEnriched.ok ? await resEnriched.text() : "[]";
+      const textRaw = resRaw.ok ? await resRaw.text() : "[]";
+      const fp = textEnriched + "|" + textRaw;
+      if (fp === lastResultsFingerprint && preserveFilters) return;
+      lastResultsFingerprint = fp;
+
+      let enriched;
+      let raw;
+      try {
+        enriched = normalizeIncomingJson(JSON.parse(textEnriched));
+      } catch {
+        enriched = [];
+      }
+      try {
+        raw = normalizeIncomingJson(JSON.parse(textRaw));
+      } catch {
+        raw = [];
+      }
+
+      const useEnriched = Array.isArray(enriched) && enriched.length > 0;
+      const payload = useEnriched ? enriched : raw;
+      let sourceHint = useEnriched
+        ? "results.json (enriched)"
+        : raw.length
+          ? "raw_results.json (TinyFish scrape)"
+          : "no listings yet";
+
+      setData(payload, { preserveFilters: !!preserveFilters, sourceHint });
+    } catch (e) {
+      if (!preserveFilters) {
+        loadMsg.textContent =
+          "Could not load data — run `python serve.py` from repo root (serves project/), or pick a JSON file.";
+        console.warn(e);
+        resultsCount.textContent = "Could not load data";
+      }
+    }
+  }
+
+  async function tryFetch() {
+    loadMsg.textContent = "Loading results.json & raw_results.json…";
+    lastResultsFingerprint = "";
+    await reloadFromServer(false);
+  }
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => {
+      if (!autoPoll.checked) return;
+      reloadFromServer(true);
+    }, 4000);
+  }
+
+  CHIP_IDS.forEach((id) => {
+    const el = document.getElementById("chip-" + id);
+    if (el) el.addEventListener("click", () => setContactFilter(id));
+  });
+
+  searchInput.addEventListener("input", render);
+  [fCategory, fLocation, fPlatform, fPrice].forEach((el) => el.addEventListener("change", render));
+
+  btnCsv.addEventListener("click", exportCsv);
+  btnRefresh.addEventListener("click", () => reloadFromServer(true));
+  autoPoll.addEventListener("change", () => {
+    if (autoPoll.checked) reloadFromServer(true);
+  });
+
+  filePick.addEventListener("change", (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        lastResultsFingerprint = "";
+        setData(data, { sourceHint: "uploaded JSON file" });
+      } catch (e) {
+        loadMsg.textContent = "Invalid JSON file.";
+        console.warn(e);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  tryFetch().then(() => startPolling());
+</script>
+</body>
+</html>

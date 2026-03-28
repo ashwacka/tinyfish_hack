@@ -1,1 +1,7 @@
 .env
+
+# Claude / Cursor worktrees (nested git repos — do not add as submodules)
+.claude/
+
+__pycache__/
+*.py[cod]
