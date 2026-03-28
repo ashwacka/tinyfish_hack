@@ -1,6 +1,6 @@
 {
-  "phase": "complete",
-  "enriched": 15,
-  "total": 15,
-  "hint": "Pipeline finished."
+  "phase": "enriching",
+  "enriched": 9,
+  "total": 30,
+  "hint": "Refresh or leave auto-poll on — cards appear as rows complete."
 }

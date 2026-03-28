@@ -40,6 +40,24 @@ LEMON8_HASHTAG_URLS = [
     "https://www.lemon8-app.com/search/hashtag/sghomebased",
 ]
 
+SCOUT_INTENT_PATH = os.path.join(_RAW_DIR, "scout_intent.json")
+
+
+def _load_scout_focus() -> str:
+    """Optional user theme from landing page (scout_intent.json or SCOUT_QUERY env)."""
+    env_q = (os.environ.get("SCOUT_QUERY") or "").strip()
+    if env_q:
+        return env_q[:200]
+    if os.path.isfile(SCOUT_INTENT_PATH):
+        try:
+            with open(SCOUT_INTENT_PATH, encoding="utf-8") as f:
+                data = json.load(f)
+            q = str(data.get("query") or "").strip()
+            return q[:200] if q else ""
+        except (json.JSONDecodeError, OSError):
+            return ""
+    return ""
+
 
 def _dedupe_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[str] = set()
@@ -224,12 +242,22 @@ def _debug_unparsed_result(payload: Any) -> None:
     print(f"    Debug: value preview (see why parsing got 0 rows):\n{preview}", file=sys.stderr)
 
 
-def build_combined_scrape_goal() -> str:
+def build_combined_scrape_goal(scout_focus: str = "") -> str:
     lemon8_bullets = "\n".join(f"     • {u}" for u in LEMON8_HASHTAG_URLS)
+    focus_block = ""
+    if scout_focus:
+        esc = scout_focus.replace('"', "'")[:200]
+        focus_block = f"""
+0. USER SCOUT REQUEST (prioritize this theme)
+   The user asked for Singapore HOME-BASED sellers related to: "{esc}".
+   Use Lemon8 search (search bar / suggestions) with queries like "{esc}", "sg {esc}", "home based {esc}", "sg home {esc}" as needed.
+   Collect posts that match this theme (food, beauty, crafts, services — home-based / HBB / small seller).
+   Merge these leads with hashtag results below; de-duplicate by post URL.
+"""
     return f"""
-You are collecting Singapore home-based food business leads on Lemon8 in a SINGLE continuous session.
+You are collecting Singapore home-based business leads on Lemon8 in a SINGLE continuous session.
 Do everything below before returning JSON. Re-use the same browser tab/window; navigate with the address bar or in-page links.
-
+{focus_block}
 1. Open {LEMON8_HOME}, wait until loaded, dismiss cookie banners or popups.
 2. Visit EACH hashtag URL below IN ORDER. On each page, scroll until roughly 10–15 posts that look like home food / home bakers / home-based sellers are visible. Extract data from each relevant post.
 {lemon8_bullets}
@@ -247,10 +275,12 @@ If login is required, return partial data in "listings" and optional "note": "pa
 """
 
 
-def _run_single_tinyfish_session(client: TinyFish) -> list[dict[str, Any]]:
-    goal = build_combined_scrape_goal()
+def _run_single_tinyfish_session(client: TinyFish, scout_focus: str = "") -> list[dict[str, Any]]:
+    goal = build_combined_scrape_goal(scout_focus)
     print("\n=== One TinyFish scrape session (Lemon8 hashtags only) ===")
     print(f"    Start URL: {LEMON8_HOME}")
+    if scout_focus:
+        print(f"    Scout focus: {scout_focus!r}")
     print("    This is a single dashboard run — it may take several minutes.\n")
 
     rows: list[dict[str, Any]] = []
@@ -323,7 +353,8 @@ def main() -> None:
         }
     )
 
-    part = _run_single_tinyfish_session(client)
+    scout_focus = _load_scout_focus()
+    part = _run_single_tinyfish_session(client, scout_focus)
     deduped = _dedupe_rows(part)
 
     if not deduped:

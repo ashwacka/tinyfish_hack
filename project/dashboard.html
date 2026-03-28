@@ -28,6 +28,7 @@
       z-index: 100;
     }
     .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .logo { font-size: 20px; font-weight: 600; color: #1a1a1a; }
     .logo span { color: #f97316; }
     .subtitle { font-size: 13px; color: #888; }
@@ -64,6 +65,35 @@
       color: #9a3412;
     }
     .pipeline-banner[hidden] { display: none !important; }
+
+    .scout-banner {
+      background: linear-gradient(90deg, #fff7ed 0%, #ffedd5 100%);
+      border-bottom: 1px solid #fed7aa;
+      padding: 0.65rem 2rem;
+      font-size: 13px;
+      color: #9a3412;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .scout-banner[hidden] { display: none !important; }
+    .scout-banner a {
+      color: #f97316;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .scout-banner a:hover { text-decoration: underline; }
+
+    .header-scout-link {
+      font-size: 13px;
+      font-weight: 500;
+      color: #f97316;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .header-scout-link:hover { text-decoration: underline; }
 
     .meta-bar {
       background: #fafaf9;
@@ -266,7 +296,10 @@
     <div class="logo">HBB<span>Scout</span></div>
     <div class="subtitle">Home-based business leads · <code>results.json</code> (enriched) or <code>raw_results.json</code> (TinyFish scrape)</div>
   </div>
-  <button type="button" class="export-btn" id="btnCsv" disabled>Export CSV</button>
+  <div class="header-actions">
+    <a class="header-scout-link" href="index.html">← Scout home</a>
+    <button type="button" class="export-btn" id="btnCsv" disabled>Export CSV</button>
+  </div>
 </div>
 
 <div class="stats-bar">
@@ -297,6 +330,11 @@
 </div>
 
 <div id="pipelineBanner" class="pipeline-banner" role="status" hidden></div>
+
+<div id="scoutBanner" class="scout-banner" role="region" aria-label="Scout focus" hidden>
+  <span>Filtered for your scout: <strong class="scout-focus-text"></strong></span>
+  <a href="index.html">New search</a>
+</div>
 
 <div class="meta-bar">
   <label><input type="checkbox" id="autoPoll" checked /> Auto-refresh every 4s</label>
@@ -363,6 +401,27 @@
   const resultsCount = document.getElementById("results-count");
 
   const CHIP_IDS = ["all", "whatsapp", "instagram", "anycontact", "active"];
+
+  function applyScoutParams() {
+    const params = new URLSearchParams(location.search);
+    const qParam = params.get("q");
+    if (qParam) {
+      sessionStorage.setItem("hbb_scout_query", qParam);
+      searchInput.value = qParam;
+      history.replaceState({}, "", "dashboard.html");
+    } else {
+      const stored = sessionStorage.getItem("hbb_scout_query");
+      if (stored) searchInput.value = stored;
+    }
+    const focus = sessionStorage.getItem("hbb_scout_query");
+    const banner = document.getElementById("scoutBanner");
+    if (banner && focus) {
+      banner.hidden = false;
+      const el = banner.querySelector(".scout-focus-text");
+      if (el) el.textContent = focus;
+    }
+  }
+  applyScoutParams();
 
   /** TinyFish often returns { "result": [ {...}, ... ] } — unwrap to an array. */
   function normalizeIncomingJson(payload) {

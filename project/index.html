@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HBBScout — Find Singapore home-based businesses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #faf8f4;
+      color: #1a1a1a;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .top-bar {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1a1a1a;
+      text-decoration: none;
+    }
+    .brand span { color: #f97316; }
+
+    .nav-dash {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #f97316;
+      text-decoration: none;
+    }
+    .nav-dash:hover { text-decoration: underline; }
+
+    .hero-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 3rem;
+      text-align: center;
+    }
+
+    .powered-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #f97316;
+      background: #fff;
+      border: 1px solid #fed7aa;
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      margin-bottom: 1.75rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      color: #111;
+    }
+    h1 .accent { color: #f97316; display: block; margin-top: 0.15rem; }
+
+    .sub {
+      font-size: 1.05rem;
+      color: #6b7280;
+      max-width: 520px;
+      margin: 0 auto 2rem;
+    }
+    .sub p + p { margin-top: 0.35rem; }
+
+    .search-shell {
+      background: #fff;
+      border-radius: 999px;
+      border: 1px solid #e8e8e5;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      display: flex;
+      align-items: stretch;
+      padding: 5px;
+      gap: 6px;
+      max-width: 640px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .search-shell input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      padding: 0.85rem 1.25rem;
+      font-family: inherit;
+      min-width: 0;
+    }
+    .search-shell input::placeholder { color: #9ca3af; }
+    .search-shell input:focus { outline: none; }
+
+    .btn-find {
+      flex-shrink: 0;
+      background: #f97316;
+      color: #fff;
+      border: none;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.85rem 1.5rem;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-find:hover:not(:disabled) { background: #ea580c; }
+    .btn-find:active:not(:disabled) { transform: scale(0.98); }
+    .btn-find:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .status-msg {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin: -1.5rem auto 2rem;
+      max-width: 560px;
+      min-height: 1.25rem;
+    }
+    .status-msg.error { color: #b45309; }
+    .status-msg.busy { color: #1d4ed8; }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9ca3af;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .chips {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+
+    .chip {
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      background: #fff;
+      border: 1px solid #e8e8e5;
+      padding: 0.55rem 0.95rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .chip:hover {
+      border-color: #fdba74;
+      box-shadow: 0 2px 8px rgba(249,115,22,0.12);
+    }
+
+    .footnote {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      padding: 0 1.5rem 2rem;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .footnote code { font-size: 0.7rem; background: #f3f4f6; padding: 0.1rem 0.35rem; border-radius: 4px; }
+
+    @media (max-width: 560px) {
+      .search-shell { flex-direction: column; border-radius: 20px; }
+      .btn-find { width: 100%; }
+    }
+
+    /* Full-screen loading while TinyFish + pipeline run */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(250, 248, 244, 0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 1;
+      transition: opacity 0.25s ease;
+    }
+    .loading-overlay[hidden] {
+      display: none !important;
+    }
+    .loading-card {
+      max-width: 420px;
+      text-align: center;
+      background: #fff;
+      border: 1px solid #e8e8e5;
+      border-radius: 20px;
+      padding: 2.25rem 1.75rem;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    }
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1.5rem;
+      border: 3px solid #fed7aa;
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.4;
+      margin-bottom: 0.65rem;
+    }
+    .loading-query {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+    }
+    .loading-query strong {
+      color: #f97316;
+      font-weight: 600;
+    }
+    .loading-sub {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 1rem;
+    }
+    .loading-overlay.is-error .loading-spinner {
+      display: none;
+    }
+    .loading-overlay.is-error .loading-card {
+      max-width: 460px;
+      padding: 2.5rem 2rem;
+      border-radius: 24px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+    }
+    .loading-overlay.is-error .loading-title {
+      color: #7c2d12;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .loading-error-detail {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin: 0 0 1.5rem;
+      line-height: 1.6;
+      text-align: left;
+    }
+    .loading-error-detail p {
+      margin: 0 0 0.75rem;
+    }
+    .loading-error-detail p:last-child {
+      margin-bottom: 0;
+    }
+    .loading-error-detail code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      background: #f3f4f6;
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+      color: #374151;
+      font-weight: 500;
+    }
+    .loading-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .loading-actions button {
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+    }
+    .loading-actions .btn-primary {
+      background: #f97316;
+      color: #fff;
+    }
+    .loading-actions .btn-primary:hover {
+      background: #ea580c;
+    }
+    .loading-actions .btn-ghost {
+      background: #f3f4f6;
+      color: #374151;
+    }
+    .loading-actions .btn-ghost:hover {
+      background: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <a class="brand" href="index.html">HBB<span>Scout</span></a>
+    <a class="nav-dash" href="dashboard.html">Have results? View dashboard →</a>
+  </header>
+
+  <main class="hero-wrap">
+    <div class="powered-pill" aria-hidden="true">🐟 Powered by TinyFish</div>
+
+    <h1>
+      Find Singapore<br />
+      <span class="accent">home-based businesses</span>
+    </h1>
+
+    <div class="sub">
+      <p>Search Lemon8 for bakers, nail salons, matcha sellers &amp; more.</p>
+      <p>Get their contact details — instantly.</p>
+    </div>
+
+    <form class="search-shell" id="scout-form" action="#" method="get" autocomplete="off">
+      <input
+        type="text"
+        id="scout-q"
+        name="q"
+        placeholder="e.g. matcha, bento cakes, nail salon…"
+        maxlength="120"
+        aria-label="What are you looking for?"
+      />
+      <button type="submit" class="btn-find" id="btn-find">Find Businesses →</button>
+    </form>
+
+    <p class="status-msg" id="status-msg" role="status"></p>
+
+    <p class="section-label">Popular categories</p>
+  </main>
+
+  <div class="chips" id="chips" aria-label="Popular searches"></div>
+
+  <p class="footnote">
+    “Find Businesses” needs the scout API: from the repo root run <code>python serve.py</code> (not <code>python -m http.server</code>). That runs TinyFish + enrichment locally; first run may take several minutes.
+  </p>
+
+  <div
+    id="loading-overlay"
+    class="loading-overlay"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="loading-title"
+    aria-hidden="true"
+  >
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <p class="loading-title" id="loading-title">
+        Hold on! We are searching through the web for your request
+      </p>
+      <p class="loading-query" id="loading-query"></p>
+      <p class="loading-sub" id="loading-sub">
+        TinyFish is browsing Lemon8 for home-based leads matching your keywords. This usually takes a few minutes.
+      </p>
+      <div class="loading-error-detail" id="loading-error" hidden></div>
+      <div class="loading-actions" id="loading-actions" hidden></div>
+    </div>
+  </div>
+
+  <script>
+    const CATEGORIES = [
+      ["🍵", "Matcha"],
+      ["🎂", "Bento cakes"],
+      ["🥐", "Bakery"],
+      ["💅", "Nail salon"],
+      ["🕯️", "Candles"],
+      ["🍪", "Cookies"],
+      ["🍫", "Brownies"],
+      ["🍥", "Macarons"],
+      ["🍡", "Kueh"],
+      ["🥗", "Healthy food"],
+      ["🍱", "Home cook"],
+      ["🍮", "Desserts"],
+    ];
+
+    const form = document.getElementById("scout-form");
+    const input = document.getElementById("scout-q");
+    const btnFind = document.getElementById("btn-find");
+    const statusEl = document.getElementById("status-msg");
+    const chipsEl = document.getElementById("chips");
+    const loadingOverlay = document.getElementById("loading-overlay");
+    const loadingQueryEl = document.getElementById("loading-query");
+    const loadingSubEl = document.getElementById("loading-sub");
+    const loadingErrorEl = document.getElementById("loading-error");
+    const loadingActionsEl = document.getElementById("loading-actions");
+    const loadingTitleEl = document.getElementById("loading-title");
+
+    const POLL_MS = 2500;
+
+    const ERROR_HTML_NO_API = `
+      <p>The scout API isn't available. From the <strong>repo root</strong> run <code>python serve.py</code> — not <code>python -m http.server</code> — then try again.</p>
+      <p>You can still open the dashboard and run <code>python project/run.py</code> in a terminal to scrape manually.</p>
+    `;
+    const ERROR_HTML_NETWORK = `
+      <p>We couldn't reach the scout API. From the <strong>repo root</strong> run <code>python serve.py</code>, then try again.</p>
+      <p>If you only need static files, use the dashboard link — to <strong>start a scrape from this page</strong> you need <code>serve.py</code>.</p>
+    `;
+
+    function sleep(ms) {
+      return new Promise((r) => setTimeout(r, ms));
+    }
+
+    function showLoadingState(query) {
+      loadingOverlay.hidden = false;
+      loadingOverlay.classList.remove("is-error");
+      loadingOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      loadingQueryEl.innerHTML = "Searching for: <strong>" + escapeHtml(query) + "</strong>";
+      loadingSubEl.hidden = false;
+      loadingErrorEl.hidden = true;
+      loadingActionsEl.hidden = true;
+      loadingActionsEl.innerHTML = "";
+      const spin = loadingOverlay.querySelector(".loading-spinner");
+      if (spin) spin.style.display = "";
+      loadingTitleEl.textContent =
+        "Hold on! We are searching through the web for your request";
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function showLoadingError(message, query, options) {
+      loadingOverlay.hidden = false;
+      loadingOverlay.classList.add("is-error");
+      loadingOverlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      loadingTitleEl.textContent = "We couldn't start the search";
+      loadingQueryEl.innerHTML = "";
+      loadingSubEl.hidden = true;
+      loadingErrorEl.hidden = false;
+      if (options && options.htmlMessage) {
+        loadingErrorEl.innerHTML = options.htmlMessage;
+      } else {
+        loadingErrorEl.textContent = message;
+      }
+      loadingActionsEl.hidden = false;
+      loadingActionsEl.innerHTML = "";
+
+      const primary = document.createElement("button");
+      primary.type = "button";
+      primary.className = "btn-primary";
+      primary.textContent = options.primaryLabel || "Go to dashboard";
+      primary.addEventListener("click", () => {
+        hideLoadingOverlay();
+        setBusy(false, "");
+        goDashboard(query);
+      });
+      loadingActionsEl.appendChild(primary);
+
+      if (options.showRetry) {
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn-ghost";
+        retry.textContent = "Try again";
+        retry.addEventListener("click", () => {
+          hideLoadingOverlay();
+          setBusy(false, "");
+          input.focus();
+        });
+        loadingActionsEl.appendChild(retry);
+      }
+    }
+
+    function hideLoadingOverlay() {
+      loadingOverlay.hidden = true;
+      loadingOverlay.classList.remove("is-error");
+      loadingOverlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    }
+
+    /** ok=false means we could not read status — keep polling, don’t assume idle. */
+    async function fetchScoutStatus() {
+      try {
+        const res = await fetch("/api/scout/status?t=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) return { ok: false, running: true };
+        const j = await res.json();
+        return { ok: true, running: !!j.running };
+      } catch {
+        return { ok: false, running: true };
+      }
+    }
+
+    /** Wait until another scout job has finished (slot free). */
+    async function waitUntilIdle() {
+      let badStreak = 0;
+      for (;;) {
+        const s = await fetchScoutStatus();
+        if (s.ok && !s.running) return;
+        if (!s.ok) {
+          badStreak++;
+          if (badStreak >= 4) return;
+        } else {
+          badStreak = 0;
+        }
+        await sleep(POLL_MS);
+      }
+    }
+
+    /** After POST succeeds, wait until our background pipeline has finished. */
+    async function waitUntilPipelineDone() {
+      await sleep(800);
+      const maxTicks = 480;
+      for (let i = 0; i < maxTicks; i++) {
+        const s = await fetchScoutStatus();
+        if (s.ok && !s.running) return;
+        await sleep(POLL_MS);
+      }
+    }
+
+    chipsEl.innerHTML = CATEGORIES.map(
+      ([emoji, label]) =>
+        `<button type="button" class="chip" data-q="${label.replace(/"/g, "&quot;")}">${emoji} ${label}</button>`
+    ).join("");
+
+    chipsEl.addEventListener("click", (e) => {
+      const b = e.target.closest(".chip");
+      if (!b) return;
+      const q = b.getAttribute("data-q") || b.textContent.replace(/^[^\s]+\s*/, "").trim();
+      input.value = q;
+      input.focus();
+    });
+
+    function setBusy(busy, msg) {
+      btnFind.disabled = busy;
+      if (msg != null) {
+        statusEl.textContent = msg;
+        statusEl.classList.toggle("busy", busy);
+        statusEl.classList.remove("error");
+      }
+    }
+
+    function goDashboard(query) {
+      const q = query.trim();
+      sessionStorage.setItem("hbb_scout_query", q);
+      window.location.href = "dashboard.html?q=" + encodeURIComponent(q);
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) {
+        statusEl.textContent = "Type what you’re looking for, or pick a category.";
+        statusEl.classList.add("error");
+        return;
+      }
+      statusEl.classList.remove("error");
+      statusEl.textContent = "";
+      setBusy(true, "");
+
+      showLoadingState(q);
+
+      try {
+        await waitUntilIdle();
+
+        let res = await fetch("/api/scout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q }),
+        });
+        let data = res.ok ? await res.json().catch(() => ({})) : {};
+
+        if (res.status === 409) {
+          await waitUntilIdle();
+          res = await fetch("/api/scout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: q }),
+          });
+          data = res.ok ? await res.json().catch(() => ({})) : {};
+        }
+
+        if (!res.ok) {
+          setBusy(false, "");
+          const serverMsg = data.error && String(data.error).trim();
+          showLoadingError(
+            serverMsg || "",
+            q,
+            {
+              showRetry: true,
+              htmlMessage: serverMsg
+                ? "<p>" + escapeHtml(serverMsg) + "</p>"
+                : ERROR_HTML_NO_API,
+            }
+          );
+          return;
+        }
+
+        await waitUntilPipelineDone();
+        setBusy(false, "");
+        hideLoadingOverlay();
+        goDashboard(q);
+      } catch {
+        setBusy(false, "");
+        showLoadingError("", q, { showRetry: true, htmlMessage: ERROR_HTML_NETWORK });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 .env
 
+# Ephemeral scout query from landing page (written by serve.py)
+project/scout_intent.json
+
 # Claude / Cursor worktrees (nested git repos — do not add as submodules)
 .claude/
 

@@ -68,7 +68,7 @@ def main() -> None:
     print("\nView dashboard:", flush=True)
     if os.path.isfile(serve_py):
         print(f"  From repo root:  python serve.py", flush=True)
-        print("  Then: http://localhost:8080/dashboard.html", flush=True)
+        print("  Then: http://localhost:8080/  (scout) or …/dashboard.html", flush=True)
     print(
         f"  Or:  cd {BASE_DIR} && python -m http.server 8080",
         flush=True,
